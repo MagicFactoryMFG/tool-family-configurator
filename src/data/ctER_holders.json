@@ -1,0 +1,595 @@
+{
+    "data": [
+        {
+            "description": "CT40 ER16 COLLET CHUCK X 2-1/2\" GAGE LENGTH, TSC",
+            "expressions": {
+                "tool_holderGaugeLength": "2.5 in",
+                "tool_unit": "'inches'"
+            },
+            "gaugeLength": 5.187047244094486,
+            "guid": "7976d44f-dddc-48a5-9867-5cd878c39f81",
+            "last_modified": 1782228144404,
+            "product-id": "04-0006",
+            "product-link": "https://www.haascnc.com/haas-tooling/mill_toolholding/er_collet_chucks/04-0006.html",
+            "reference_guid": "80f471b9-0388-436c-a13c-4ed51c8713cd",
+            "segments": [
+                {
+                    "height": 0.0795669291338583,
+                    "lower-diameter": 0.826771653543307,
+                    "upper-diameter": 1.10236220472441
+                },
+                {
+                    "height": 0.609409448818898,
+                    "lower-diameter": 1.10236220472441,
+                    "upper-diameter": 1.10236220472441
+                },
+                {
+                    "height": 0.266141732283465,
+                    "lower-diameter": 0.866141732283465,
+                    "upper-diameter": 0.866141732283465
+                },
+                {
+                    "height": 0.0393700787401575,
+                    "lower-diameter": 1.02362204724409,
+                    "upper-diameter": 1.10236220472441
+                },
+                {
+                    "height": 0.0862204724409449,
+                    "lower-diameter": 1.10236220472441,
+                    "upper-diameter": 1.10236220472441
+                },
+                {
+                    "height": 0.0393700787401575,
+                    "lower-diameter": 1.10236220472441,
+                    "upper-diameter": 1.18110236220472
+                },
+                {
+                    "height": 0.0393700787401575,
+                    "lower-diameter": 1.67125984251969,
+                    "upper-diameter": 1.75
+                },
+                {
+                    "height": 0.590551181102362,
+                    "lower-diameter": 1.75,
+                    "upper-diameter": 1.75
+                },
+                {
+                    "height": 0.0393700787401575,
+                    "lower-diameter": 2.42125984251969,
+                    "upper-diameter": 2.5
+                },
+                {
+                    "height": 0.12244094488189,
+                    "lower-diameter": 2.5,
+                    "upper-diameter": 2.5
+                },
+                {
+                    "height": 0.0170472440944882,
+                    "lower-diameter": 2.5,
+                    "upper-diameter": 2.48031496062992
+                },
+                {
+                    "height": 0.0571653543307087,
+                    "lower-diameter": 2.48031496062992,
+                    "upper-diameter": 2.28232283464567
+                },
+                {
+                    "height": 0.151968503937008,
+                    "lower-diameter": 2.21889763779528,
+                    "upper-diameter": 2.21889763779528
+                },
+                {
+                    "height": 0.0571653543307087,
+                    "lower-diameter": 2.28232283464567,
+                    "upper-diameter": 2.48031496062992
+                },
+                {
+                    "height": 0.0170472440944882,
+                    "lower-diameter": 2.48031496062992,
+                    "upper-diameter": 2.5
+                },
+                {
+                    "height": 0.123425196850394,
+                    "lower-diameter": 2.5,
+                    "upper-diameter": 2.5
+                },
+                {
+                    "height": 0.0393700787401575,
+                    "lower-diameter": 2.5,
+                    "upper-diameter": 2.42125984251969
+                },
+                {
+                    "height": 0.031496062992126,
+                    "lower-diameter": 1.7755905511811,
+                    "upper-diameter": 1.71259842519685
+                },
+                {
+                    "height": 0.0617716535433071,
+                    "lower-diameter": 1.71259842519685,
+                    "upper-diameter": 1.71259842519685
+                },
+                {
+                    "height": 0.0222834645669291,
+                    "lower-diameter": 1.71259842519685,
+                    "upper-diameter": 1.73106299212598
+                },
+                {
+                    "height": 0.00948818897637795,
+                    "lower-diameter": 1.73106299212598,
+                    "upper-diameter": 1.75
+                },
+                {
+                    "height": 2.65330708661417,
+                    "lower-diameter": 1.75,
+                    "upper-diameter": 0.976102362204724
+                },
+                {
+                    "height": 0.0337007874015748,
+                    "lower-diameter": 0.976102362204724,
+                    "upper-diameter": 0.898188976377953
+                }
+            ],
+            "type": "holder",
+            "unit": "inches",
+            "vendor": "Haas Automation"
+        },
+        {
+            "description": "CT40 ER20 COLLET CHUCK X 4\" GAGE LENGTH, TSC",
+            "expressions": {
+                "tool_holderGaugeLength": "4 in",
+                "tool_unit": "'inches'"
+            },
+            "gaugeLength": 6.687007874015748,
+            "guid": "dcf8cd8e-877a-476e-bdfa-26eb9b76ce65",
+            "last_modified": 1782228144404,
+            "product-id": "04-1502",
+            "product-link": "https://www.haascnc.com/haas-tooling/mill_toolholding/er_collet_chucks/04-1502.html",
+            "reference_guid": "a08ebadd-2fc9-42b4-8789-354b7281afb7",
+            "segments": [
+                {
+                    "height": 0.06818897637795276,
+                    "lower-diameter": 1.1023622047244095,
+                    "upper-diameter": 1.3385826771653544
+                },
+                {
+                    "height": 0.6601574803149607,
+                    "lower-diameter": 1.3385826771653544,
+                    "upper-diameter": 1.3385826771653544
+                },
+                {
+                    "height": 0.01968503937007874,
+                    "lower-diameter": 1.3385826771653544,
+                    "upper-diameter": 1.299212598425197
+                },
+                {
+                    "height": 0.35433070866141736,
+                    "lower-diameter": 1.003937007874016,
+                    "upper-diameter": 0.984251968503937
+                },
+                {
+                    "height": 0.05905511811023623,
+                    "lower-diameter": 0.984251968503937,
+                    "upper-diameter": 1.1023622047244095
+                },
+                {
+                    "height": 0.03937007874015748,
+                    "lower-diameter": 1.2598425196850394,
+                    "upper-diameter": 1.3385826771653544
+                },
+                {
+                    "height": 1.970472440944882,
+                    "lower-diameter": 1.3385826771653544,
+                    "upper-diameter": 1.3385826771653544
+                },
+                {
+                    "height": 0.07874015748031496,
+                    "lower-diameter": 1.3385826771653544,
+                    "upper-diameter": 1.4960629921259845
+                },
+                {
+                    "height": 0.03937007874015748,
+                    "lower-diameter": 2.421259842519685,
+                    "upper-diameter": 2.5
+                },
+                {
+                    "height": 0.13374015748031495,
+                    "lower-diameter": 2.5,
+                    "upper-diameter": 2.5
+                },
+                {
+                    "height": 0.0634251968503937,
+                    "lower-diameter": 2.5,
+                    "upper-diameter": 2.2802755905511813
+                },
+                {
+                    "height": 0.15078740157480316,
+                    "lower-diameter": 2.216535433070866,
+                    "upper-diameter": 2.216535433070866
+                },
+                {
+                    "height": 0.0634251968503937,
+                    "lower-diameter": 2.2802755905511813,
+                    "upper-diameter": 2.5
+                },
+                {
+                    "height": 0.13488188976377954,
+                    "lower-diameter": 2.5,
+                    "upper-diameter": 2.5
+                },
+                {
+                    "height": 0.03937007874015748,
+                    "lower-diameter": 2.5,
+                    "upper-diameter": 2.421259842519685
+                },
+                {
+                    "height": 0.01968503937007874,
+                    "lower-diameter": 1.7559055118110238,
+                    "upper-diameter": 1.7165354330708662
+                },
+                {
+                    "height": 0.0428740157480315,
+                    "lower-diameter": 1.7165354330708662,
+                    "upper-diameter": 1.7165354330708662
+                },
+                {
+                    "height": 0.062440944881889775,
+                    "lower-diameter": 1.7165354330708662,
+                    "upper-diameter": 1.75
+                },
+                {
+                    "height": 2.653307086614174,
+                    "lower-diameter": 1.75,
+                    "upper-diameter": 0.9761023622047243
+                },
+                {
+                    "height": 0.0337007874015748,
+                    "lower-diameter": 0.9761023622047243,
+                    "upper-diameter": 0.8981889763779528
+                }
+            ],
+            "type": "holder",
+            "unit": "inches",
+            "vendor": "Haas Automation"
+        },
+        {
+            "description": "CT40 ER25 COLLET CHUCK X 2-1/2\" GAGE LENGTH, TSC",
+            "expressions": {
+                "tool_holderGaugeLength": "2.5 in",
+                "tool_unit": "'inches'"
+            },
+            "gaugeLength": 5.187047244094486,
+            "guid": "02835e5e-ab93-4a5e-bfd6-72742720eb94",
+            "last_modified": 1782228144404,
+            "product-id": "04-0008",
+            "product-link": "https://www.haascnc.com/haas-tooling/mill_toolholding/er_collet_chucks/04-0008.html",
+            "reference_guid": "eadb48cf-74af-4f14-abf1-c791aeaae4d4",
+            "segments": [
+                {
+                    "height": 0.136377952755906,
+                    "lower-diameter": 1.18110236220472,
+                    "upper-diameter": 1.65354330708661
+                },
+                {
+                    "height": 0.651023622047244,
+                    "lower-diameter": 1.65354330708661,
+                    "upper-diameter": 1.65354330708661
+                },
+                {
+                    "height": 0.262204724409449,
+                    "lower-diameter": 1.25984251968504,
+                    "upper-diameter": 1.25984251968504
+                },
+                {
+                    "height": 0.0393700787401575,
+                    "lower-diameter": 1.67125984251969,
+                    "upper-diameter": 1.75
+                },
+                {
+                    "height": 0.661023622047244,
+                    "lower-diameter": 1.75,
+                    "upper-diameter": 1.75
+                },
+                {
+                    "height": 0.0393700787401575,
+                    "lower-diameter": 2.42125984251969,
+                    "upper-diameter": 2.5
+                },
+                {
+                    "height": 0.12244094488189,
+                    "lower-diameter": 2.5,
+                    "upper-diameter": 2.5
+                },
+                {
+                    "height": 0.0170472440944882,
+                    "lower-diameter": 2.5,
+                    "upper-diameter": 2.48031496062992
+                },
+                {
+                    "height": 0.0571653543307087,
+                    "lower-diameter": 2.48031496062992,
+                    "upper-diameter": 2.28232283464567
+                },
+                {
+                    "height": 0.151968503937008,
+                    "lower-diameter": 2.21889763779528,
+                    "upper-diameter": 2.21889763779528
+                },
+                {
+                    "height": 0.0571653543307087,
+                    "lower-diameter": 2.28232283464567,
+                    "upper-diameter": 2.48031496062992
+                },
+                {
+                    "height": 0.0170472440944882,
+                    "lower-diameter": 2.48031496062992,
+                    "upper-diameter": 2.5
+                },
+                {
+                    "height": 0.123425196850394,
+                    "lower-diameter": 2.5,
+                    "upper-diameter": 2.5
+                },
+                {
+                    "height": 0.0393700787401575,
+                    "lower-diameter": 2.5,
+                    "upper-diameter": 2.42125984251969
+                },
+                {
+                    "height": 0.031496062992126,
+                    "lower-diameter": 1.7755905511811,
+                    "upper-diameter": 1.71259842519685
+                },
+                {
+                    "height": 0.0617716535433071,
+                    "lower-diameter": 1.71259842519685,
+                    "upper-diameter": 1.71259842519685
+                },
+                {
+                    "height": 0.0222834645669291,
+                    "lower-diameter": 1.71259842519685,
+                    "upper-diameter": 1.73106299212598
+                },
+                {
+                    "height": 0.00948818897637795,
+                    "lower-diameter": 1.73106299212598,
+                    "upper-diameter": 1.75
+                },
+                {
+                    "height": 2.65330708661417,
+                    "lower-diameter": 1.75,
+                    "upper-diameter": 0.976102362204724
+                },
+                {
+                    "height": 0.0337007874015748,
+                    "lower-diameter": 0.976102362204724,
+                    "upper-diameter": 0.898188976377953
+                }
+            ],
+            "type": "holder",
+            "unit": "inches",
+            "vendor": "Haas Automation"
+        },
+        {
+            "description": "CT40 ER32 COLLET CHUCK X 2-1/2\" GAGE LENGTH, TSC",
+            "expressions": {
+                "tool_holderGaugeLength": "2.5 in",
+                "tool_unit": "'inches'"
+            },
+            "gaugeLength": 5.187047244094485,
+            "guid": "a5182fd1-8d5c-417d-a17a-a76bcb42e861",
+            "last_modified": 1782228144404,
+            "product-id": "04-0010",
+            "product-link": "https://www.haascnc.com/haas-tooling/mill_toolholding/er_collet_chucks/04-0010.html",
+            "reference_guid": "6bedd688-3e5c-42f9-8d9e-b180bba4d591",
+            "segments": [
+                {
+                    "height": 0.0105511811023622,
+                    "lower-diameter": 1.45385826771654,
+                    "upper-diameter": 1.53259842519685
+                },
+                {
+                    "height": 0.114448818897638,
+                    "lower-diameter": 1.53259842519685,
+                    "upper-diameter": 1.92913385826772
+                },
+                {
+                    "height": 0.0340944881889764,
+                    "lower-diameter": 1.92913385826772,
+                    "upper-diameter": 1.96850393700787
+                },
+                {
+                    "height": 0.785787401574803,
+                    "lower-diameter": 1.96850393700787,
+                    "upper-diameter": 1.96850393700787
+                },
+                {
+                    "height": 0.262204724409449,
+                    "lower-diameter": 1.5748031496063,
+                    "upper-diameter": 1.5748031496063
+                },
+                {
+                    "height": 0.0393700787401575,
+                    "lower-diameter": 1.67125984251969,
+                    "upper-diameter": 1.75
+                },
+                {
+                    "height": 0.385433070866142,
+                    "lower-diameter": 1.75,
+                    "upper-diameter": 1.75
+                },
+                {
+                    "height": 0.118110236220472,
+                    "lower-diameter": 1.75,
+                    "upper-diameter": 1.98622047244095
+                },
+                {
+                    "height": 0.0393700787401575,
+                    "lower-diameter": 2.42125984251969,
+                    "upper-diameter": 2.5
+                },
+                {
+                    "height": 0.12244094488189,
+                    "lower-diameter": 2.5,
+                    "upper-diameter": 2.5
+                },
+                {
+                    "height": 0.0170472440944882,
+                    "lower-diameter": 2.5,
+                    "upper-diameter": 2.48031496062992
+                },
+                {
+                    "height": 0.0571653543307087,
+                    "lower-diameter": 2.48031496062992,
+                    "upper-diameter": 2.28232283464567
+                },
+                {
+                    "height": 0.151968503937008,
+                    "lower-diameter": 2.21889763779528,
+                    "upper-diameter": 2.21889763779528
+                },
+                {
+                    "height": 0.0571653543307087,
+                    "lower-diameter": 2.28232283464567,
+                    "upper-diameter": 2.48031496062992
+                },
+                {
+                    "height": 0.0170472440944882,
+                    "lower-diameter": 2.48031496062992,
+                    "upper-diameter": 2.5
+                },
+                {
+                    "height": 0.123425196850394,
+                    "lower-diameter": 2.5,
+                    "upper-diameter": 2.5
+                },
+                {
+                    "height": 0.0393700787401575,
+                    "lower-diameter": 2.5,
+                    "upper-diameter": 2.42125984251969
+                },
+                {
+                    "height": 0.031496062992126,
+                    "lower-diameter": 1.7755905511811,
+                    "upper-diameter": 1.71259842519685
+                },
+                {
+                    "height": 0.0617716535433071,
+                    "lower-diameter": 1.71259842519685,
+                    "upper-diameter": 1.71259842519685
+                },
+                {
+                    "height": 0.0222834645669291,
+                    "lower-diameter": 1.71259842519685,
+                    "upper-diameter": 1.73106299212598
+                },
+                {
+                    "height": 0.00948818897637795,
+                    "lower-diameter": 1.73106299212598,
+                    "upper-diameter": 1.75
+                },
+                {
+                    "height": 2.65330708661417,
+                    "lower-diameter": 1.75,
+                    "upper-diameter": 0.976102362204724
+                },
+                {
+                    "height": 0.0337007874015748,
+                    "lower-diameter": 0.976102362204724,
+                    "upper-diameter": 0.898188976377953
+                }
+            ],
+            "type": "holder",
+            "unit": "inches",
+            "vendor": "Haas Automation"
+        },
+        {
+            "description": "Maritool CT40-ER40-3.0",
+            "expressions": {
+                "tool_description": "'Maritool CT40-ER40-3.0'",
+                "tool_holderGaugeLength": "segment_1_height + segment_2_height + segment_3_height + segment_4_height + segment_5_height + segment_6_height + segment_7_height + segment_8_height + segment_9_height + segment_10_height + segment_11_height + segment_12_height + segment_13_height + segment_14_height"
+            },
+            "gaugeLength": 3.121638,
+            "guid": "50cfe244-10c5-4f74-9244-d5693d6a203a",
+            "last_modified": 1782228144404,
+            "product-id": "CAT40-ER40-3.0",
+            "product-link": "https://www.maritool.com/autodesk/76",
+            "reference_guid": "b5ac920b-7a30-4450-a9e8-9a069dde4631",
+            "segments": [
+                {
+                    "height": 0.241732,
+                    "lower-diameter": 1.9,
+                    "upper-diameter": 2.48
+                },
+                {
+                    "height": 0.9,
+                    "lower-diameter": 2.48,
+                    "upper-diameter": 2.48
+                },
+                {
+                    "height": 0.499213,
+                    "lower-diameter": 1.9685,
+                    "upper-diameter": 1.9685
+                },
+                {
+                    "height": 0.106693,
+                    "lower-diameter": 1.9685,
+                    "upper-diameter": 1.75
+                },
+                {
+                    "height": 0.575,
+                    "lower-diameter": 1.75,
+                    "upper-diameter": 1.75
+                },
+                {
+                    "height": 0.05,
+                    "lower-diameter": 1.75,
+                    "upper-diameter": 1.85
+                },
+                {
+                    "height": 0.03,
+                    "lower-diameter": 2.442,
+                    "upper-diameter": 2.502
+                },
+                {
+                    "height": 0.145,
+                    "lower-diameter": 2.502,
+                    "upper-diameter": 2.502
+                },
+                {
+                    "height": 0.079,
+                    "lower-diameter": 2.502,
+                    "upper-diameter": 2.215
+                },
+                {
+                    "height": 0.118,
+                    "lower-diameter": 2.215,
+                    "upper-diameter": 2.215
+                },
+                {
+                    "height": 0.079,
+                    "lower-diameter": 2.215,
+                    "upper-diameter": 2.502
+                },
+                {
+                    "height": 0.143,
+                    "lower-diameter": 2.502,
+                    "upper-diameter": 2.502
+                },
+                {
+                    "height": 0.03,
+                    "lower-diameter": 2.502,
+                    "upper-diameter": 2.442
+                },
+                {
+                    "height": 0.125,
+                    "lower-diameter": 1.75,
+                    "upper-diameter": 1.75
+                }
+            ],
+            "type": "holder",
+            "unit": "inches",
+            "vendor": "Maritool"
+        }
+    ],
+    "version": 36
+}
