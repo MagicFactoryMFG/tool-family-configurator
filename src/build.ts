@@ -1,5 +1,5 @@
 // build.ts — the Build-Library workflow: pick a family → drop a geometry file → set max
-// RPM + cutting roles → generate a Fusion .tools library (geometry + ER holders + model-
+// RPM + cutting roles → generate a Fusion tool library as .json (geometry + ER holders + model-
 // driven, lever-derated presets) → preview → download. All generation is in generate/*.
 import { parseGeometry, parseToolsJson, nonMillableCount } from "./generate/ingest";
 import {
@@ -135,7 +135,7 @@ function previewTable(): string {
 
   return `
     <div class="bz-stats">✓ Generated <b>${data.length}</b> tools · <b>${data.reduce((a, t) => a + t["start-values"].presets.length, 0)}</b> presets · holders embedded
-      <button class="btn primary" id="dlBtn">Download .tools</button></div>
+      <button class="btn primary" id="dlBtn">Download .json</button></div>
     <div class="bz-tablewrap"><table class="bz-table">
       <thead><tr><th>#</th><th>Description</th><th>Ø</th><th>Coating</th><th>Holder</th><th>Flute</th><th>OAL</th><th>Presets</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -172,7 +172,7 @@ function render() {
           <h2>2 · Geometry source</h2>
           <div class="bz-drop" id="drop">
             <div><b>Drop a file</b> or click</div>
-            <div class="bz-sub">.tools · .json · .csv</div>
+            <div class="bz-sub">.csv · .json (.tools also accepted)</div>
           </div>
           <input type="file" id="fileInput" accept=".tools,.json,.csv" hidden />
           <button class="btn" id="sampleBtn">Load sample (H45AL-3)</button>
@@ -223,7 +223,7 @@ app.addEventListener("click", (e) => {
   else if (el.id === "sampleBtn") loadBlanks(parseToolsJson(JSON.parse(sampleRaw)), "sample · Helical_H45AL-3.tools");
   else if (el.id === "genBtn") generate();
   else if (el.id === "dlBtn" && state.lib) {
-    const fn = state.familyKey === "square" ? "Helical_H45AL-3.tools" : "Helical_H35AL-3.tools";
+    const fn = state.familyKey === "square" ? "Helical_H45AL-3.json" : "Helical_H35AL-3.json";
     download(fn, JSON.stringify(sortDeep(state.lib), null, 1), "application/json");
   } else {
     const row = el.closest(".bz-trow") as HTMLElement | null;
