@@ -26,16 +26,22 @@ export function parseToolsJson(json: any): ToolBlank[] {
   return data
     .filter((t) => t && t.geometry && t.type !== "holder")
     .filter((t) => positive(t.geometry.DC) && positive(t.geometry.LCF) && positive(t.geometry.OAL))
-    .map((t) => ({
-      diameter: t.geometry.DC,
-      shank: positive(t.geometry.SFDM) ? t.geometry.SFDM : t.geometry.DC,
-      fluteLength: t.geometry.LCF,
-      overallLength: t.geometry.OAL,
-      flutes: positive(t.geometry.NOF) ? t.geometry.NOF : 3,
-      partNo: String(t["product-id"] ?? ""),
-      coating: t.grade,
-      description: t.description,
-    }));
+    .map((t) => {
+      const g = t.geometry;
+      const sd = g["shoulder-diameter"];
+      return {
+        diameter: g.DC,
+        shank: positive(g.SFDM) ? g.SFDM : g.DC,
+        fluteLength: g.LCF,
+        overallLength: g.OAL,
+        flutes: positive(g.NOF) ? g.NOF : 3,
+        partNo: String(t["product-id"] ?? ""),
+        coating: t.GRADE ?? t.grade,
+        description: t.description,
+        reachIn: positive(g.LB) ? g.LB : undefined,
+        neckDiameterIn: positive(sd) && sd < g.DC - 1e-9 ? sd : undefined, // real reduced neck
+      };
+    });
 }
 
 /** Count of data tools that are NOT millable (for "skipped N" reporting). */
@@ -82,11 +88,20 @@ export function parseCsv(text: string): ToolBlank[] {
     loc: col(/length of cut/, /\bloc\b/, /\bl2\b/),
     oal: col(/overall length/, /\boal\b/, /\bl1\b/),
     flutes: col(/flutes/, /^#$/),
-    tool: col(/tool\s*#/),
     desc: col(/tool description/, /description/),
+    reach: col(/lbs/, /reach/, /\bl3\b/), // reduced-neck reach
+    neck: col(/neck/),
   };
-  const coatHdr = header.find((c) => /zplus|uncoated|coated/i.test(c)) ?? "";
-  const coating = /zplus/i.test(coatHdr) ? "Zplus" : /uncoated/i.test(coatHdr) ? "Uncoated" : undefined;
+  // Tool-number columns: one per coating (Uncoated / Zplus) if present, else a generic "Tool #".
+  const coatCols: { label: string | undefined; idx: number }[] = [];
+  header.forEach((h, i) => {
+    if (/uncoated/.test(h)) coatCols.push({ label: "Uncoated", idx: i });
+    else if (/zplus/.test(h)) coatCols.push({ label: "Zplus", idx: i });
+  });
+  if (!coatCols.length) {
+    const t = col(/tool\s*#/);
+    if (t >= 0) coatCols.push({ label: undefined, idx: t });
+  }
 
   const blanks: ToolBlank[] = [];
   for (let i = hi + 1; i < rows.length; i++) {
@@ -98,11 +113,18 @@ export function parseCsv(text: string): ToolBlank[] {
     if (isNaN(dia) || isNaN(loc) || isNaN(oal) || !(fl >= 1 && fl <= 20)) continue; // not a data row
     const shank = ci.shank >= 0 ? frac(r[ci.shank] ?? "") : dia;
     const code = ci.desc >= 0 ? (r[ci.desc] ?? "").trim() : "";
-    const partNo = ci.tool >= 0 ? (r[ci.tool] ?? "").trim() : code;
-    blanks.push({
-      diameter: dia, shank: isNaN(shank) ? dia : shank, fluteLength: loc, overallLength: oal,
-      flutes: fl, partNo: partNo || code, coating, code,
-    });
+    const reach = ci.reach >= 0 ? frac(r[ci.reach] ?? "") : NaN;
+    const neck = ci.neck >= 0 ? frac(r[ci.neck] ?? "") : NaN;
+    for (const cc of coatCols) {
+      const pid = (r[cc.idx] ?? "").trim();
+      if (!pid) continue; // this coating not offered in this size
+      blanks.push({
+        diameter: dia, shank: isNaN(shank) ? dia : shank, fluteLength: loc, overallLength: oal,
+        flutes: fl, partNo: pid || code, coating: cc.label, code,
+        reachIn: reach > 0 ? reach : undefined,
+        neckDiameterIn: neck > 0 ? neck : undefined,
+      });
+    }
   }
   return blanks;
 }

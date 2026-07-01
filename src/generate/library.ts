@@ -19,6 +19,8 @@ export interface ToolBlank {
   coating?: string; // grade label (Uncoated / Zplus / …)
   code?: string; // vendor code (e.g. H45AL-S-30125)
   description?: string; // pass-through description if the source had one
+  reachIn?: number; // LBS / length below shank (reduced-neck tools); else LB is modeled
+  neckDiameterIn?: number; // reduced-neck diameter; else the body is full DC
 }
 
 export interface FamilyDef {
@@ -187,16 +189,20 @@ export function buildTool(blank: ToolBlank, fam: FamilyDef, idx: number) {
   const dec = blank.diameter;
   const loc = blank.fluteLength;
   const isBall = fam.geometry === "ballnose";
-  const reach = r4(Math.min(loc + dec, blank.overallLength));
+  const necked = typeof blank.reachIn === "number" && blank.reachIn > 0;
+  // Reduced-neck tools carry a real reach (LBS) + neck Ø; otherwise model LB = LCF + DC.
+  const lb = necked ? r4(blank.reachIn!) : r4(Math.min(loc + dec, blank.overallLength));
+  const shoulderDia = typeof blank.neckDiameterIn === "number" && blank.neckDiameterIn > 0 ? blank.neckDiameterIn : dec;
+  const shoulderLen = necked ? r4(blank.reachIn!) : loc;
   const holder = pickHolder(dec, fam.holderThresholds);
   const geometry = {
     CSP: false, HAND: true, NT: 0, SIG: 0, TP: 0,
     DC: dec, RE: isBall ? dec / 2 : 0.0, "tip-diameter": isBall ? 0.0 : dec,
-    LB: reach, LCF: loc, OAL: blank.overallLength, SFDM: blank.shank, NOF: blank.flutes, TA: 0,
-    "shoulder-diameter": dec, "shoulder-length": loc,
+    LB: lb, LCF: loc, OAL: blank.overallLength, SFDM: blank.shank, NOF: blank.flutes, TA: 0,
+    "shoulder-diameter": shoulderDia, "shoulder-length": shoulderLen,
     "thread-profile-angle": 0, "tip-length": 0, "tip-offset": 0,
     // spindle-gauge → tip; Fusion needs this whenever a holder is present
-    "assemblyGaugeLength": r6((holder.gaugeLength as number ?? 0) + reach),
+    "assemblyGaugeLength": r6((holder.gaugeLength as number ?? 0) + lb),
   };
   return {
     guid: newGuid(),

@@ -3,7 +3,7 @@
 // (tool count, type, geometry, holders, and every preset's numbers). Pins TS == Python.
 import { readFileSync } from "node:fs";
 import { describe, it, expect } from "vitest";
-import { buildLibrary, defaultSquareFamily, type ToolBlank } from "./library";
+import { buildLibrary, buildTool, defaultSquareFamily, type ToolBlank } from "./library";
 
 const fixture = JSON.parse(
   readFileSync(new URL("./__fixtures__/Helical_H45AL-3.tools", import.meta.url), "utf8"),
@@ -23,6 +23,23 @@ const blanks: ToolBlank[] = fixture.data.map((t) => ({
 
 const built = buildLibrary(blanks, defaultSquareFamily());
 const er = (t: any) => /ER\d+/i.exec(t.holder.description)?.[0];
+
+describe("reduced-neck geometry", () => {
+  it("uses reach for LB/shoulder-length and neck Ø for shoulder-diameter", () => {
+    const blank: ToolBlank = { diameter: 0.125, shank: 0.125, fluteLength: 0.15625, overallLength: 2.5, flutes: 3, partNo: "46010", coating: "Uncoated", reachIn: 0.5, neckDiameterIn: 0.118 };
+    const g = buildTool(blank, defaultSquareFamily(), 1).geometry;
+    expect(g.LB).toBeCloseTo(0.5, 9);
+    expect(g["shoulder-length"]).toBeCloseTo(0.5, 9);
+    expect(g["shoulder-diameter"]).toBeCloseTo(0.118, 9);
+  });
+  it("straight tool (no reach/neck) is unchanged", () => {
+    const blank: ToolBlank = { diameter: 0.25, shank: 0.25, fluteLength: 0.75, overallLength: 2.5, flutes: 3, partNo: "x" };
+    const g = buildTool(blank, defaultSquareFamily(), 1).geometry;
+    expect(g.LB).toBeCloseTo(Math.min(0.75 + 0.25, 2.5), 9);
+    expect(g["shoulder-diameter"]).toBeCloseTo(0.25, 9);
+    expect(g["shoulder-length"]).toBeCloseTo(0.75, 9);
+  });
+});
 
 describe("TS engine reproduces the Python H45AL-3 library", () => {
   it("same version and tool count", () => {

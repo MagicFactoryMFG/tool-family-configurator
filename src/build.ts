@@ -181,7 +181,7 @@ function render() {
         <section>
           <h2>3 · Material & cutting roles</h2>
           <select id="matSel" class="bz-input">
-            ${MATERIALS.map((m) => `<option value="${m.key}" ${state.materialKey === m.key ? "selected" : ""}>${m.label} (${m.prefix})</option>`).join("")}
+            ${MATERIALS.filter((m) => m.calibrated).map((m) => `<option value="${m.key}" ${state.materialKey === m.key ? "selected" : ""}>${m.label} (${m.prefix})</option>`).join("")}
           </select>
           <div class="bz-note">${mat.sfm} SFM${mat.calibrated ? "" : " · ⚠ starting point — calibrate before use"}</div>
           <label class="bz-row" style="margin-top:10px"><span>Max spindle RPM</span><input type="number" id="maxRpm" class="bz-num" value="${state.maxRpm}" step="500" min="1000" /></label>

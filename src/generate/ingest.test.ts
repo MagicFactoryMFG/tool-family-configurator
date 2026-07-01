@@ -54,6 +54,27 @@ describe("parseCsv()", () => {
   });
 });
 
+describe("parseCsv dual-coating + reduced-neck (H40ALV-RN-3 layout)", () => {
+  const csv = [
+    'Cutter Diameter,Shank Diameter,Length of Cut,Overall Length,LBS (Reach),Neck Diameter,Flutes,Uncoated,Zplus coated,Tool Description,',
+    'D1(h6),D2(h6),"L2","L1",L3,.,#,Tool #,Tool #,,',
+    ",,,,,,,,,,H40ALV-RN-3",
+    "1/8,1/8,5/32,2-1/2,1/2,0.118,3,46010,46011,H40ALV-RN-R-30125,",
+    "1/4,1/4,3/8,3,1-1/8,0.237,3,46095,46096,H40ALV-RN-R-30250,",
+  ].join("\n");
+
+  it("emits one blank per coating column, with reach + neck", () => {
+    const blanks = parseCsv(csv);
+    expect(blanks.length).toBe(4); // 2 sizes × (Uncoated + Zplus)
+    const [u, z] = blanks;
+    expect(u).toMatchObject({ diameter: 0.125, coating: "Uncoated", partNo: "46010" });
+    expect(z).toMatchObject({ diameter: 0.125, coating: "Zplus", partNo: "46011" });
+    expect(u.reachIn).toBeCloseTo(0.5, 9); // LBS 1/2"
+    expect(u.neckDiameterIn).toBeCloseTo(0.118, 9);
+    expect(blanks[3].reachIn).toBeCloseTo(1.125, 9); // 1-1/8"
+  });
+});
+
 describe("parseToolsJson skips non-millable tools", () => {
   it("drops a probe (no LCF/OAL) that would yield null geometry", () => {
     const lib = {
