@@ -109,7 +109,10 @@ export function presetFor(role: RoleSpec, blank: ToolBlank, fam: FamilyDef) {
   const sp = speedFor(fam.sfm, dia, fam.maxRpm);
   const v_f = r4(sp.n * f_z * blank.flutes);
   const v_f_ramp = r4(v_f * 0.75);
-  const sd = baseExpr(spec.sd, dia, loc);
+  let sd = baseExpr(spec.sd, dia, loc);
+  // Fusion requires stepdown (ADOC) ≤ flute length. Cap at the flute, FLOOR-rounded so
+  // rounding never pushes the cached value a hair over LCF (e.g. round(0.21875,4)=0.2188 > flute).
+  if (sd.val > loc) sd = { expr: "tool_fluteLength * 1", val: Math.floor(loc * 1e4) / 1e4 };
   const useSo = spec.so != null;
   const so = useSo ? baseExpr(spec.so!, dia, loc) : null;
   if (role.floor) notes.push("Floor-finish stepover is an engineering default - vendor 'Fin' RDOC (4-6%D) is for walls");
