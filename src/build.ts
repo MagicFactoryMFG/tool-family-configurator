@@ -7,6 +7,7 @@ import {
   type FamilyDef, type ToolBlank,
 } from "./generate/library";
 import { pickEr } from "./generate/holders";
+import { verifyReport } from "./generate/verify";
 import { MATERIALS, materialByKey } from "./generate/materials";
 import { GROUPS, ROLE_CATALOG, appliesTo, roleSpec, defaultRoleKeys, geoKey, type RoleSpec } from "./generate/roles";
 import { download } from "./exporters";
@@ -29,9 +30,14 @@ const state = {
   roles: new Set(defaultRoleKeys("square")),
   blanks: [] as ToolBlank[],
   source: "",
+  coatingFilter: "all",
+  error: "",
   lib: null as null | { version: number; data: any[] },
   sel: 0,
 };
+
+const availableCoatings = () => [...new Set(state.blanks.map((b) => b.coating).filter(Boolean))] as string[];
+const selectedBlanks = () => (state.coatingFilter === "all" ? state.blanks : state.blanks.filter((b) => (b.coating ?? "") === state.coatingFilter));
 
 function family(): FamilyDef {
   const base = baseFamily(state.familyKey);
@@ -57,6 +63,8 @@ function loadBlanks(blanks: ToolBlank[], source: string) {
   state.source = source;
   state.lib = null;
   state.sel = 0;
+  state.coatingFilter = "all";
+  state.error = "";
   render();
 }
 
@@ -64,17 +72,28 @@ async function loadFile(file: File) {
   const text = await file.text();
   try {
     const blanks = parseGeometry(file.name, text);
+    if (!blanks.length) {
+      state.blanks = []; state.lib = null;
+      state.error = `No millable tools found in “${file.name}”. Expected an end-mill CSV (cutter Ø, LOC, OAL, flutes…) or a Fusion .json/.tools library.`;
+      render();
+      return;
+    }
     let skipped = 0;
     try { skipped = nonMillableCount(JSON.parse(text)); } catch { /* CSV — no skip count */ }
     const tag = `${file.name} (${(file.size / 1024).toFixed(0)} KB)` + (skipped ? ` · skipped ${skipped} non-millable (probes/taps/…)` : "");
     loadBlanks(blanks, tag);
   } catch (e) {
-    alert(`Could not parse ${file.name}: ${(e as Error).message}`);
+    state.blanks = []; state.lib = null;
+    state.error = `Couldn't read “${file.name}”: ${(e as Error).message}`;
+    render();
   }
 }
 
 function generate() {
-  state.lib = buildLibrary(state.blanks, family());
+  const bl = selectedBlanks();
+  if (!bl.length) { state.error = "Nothing to generate — check the coating filter."; render(); return; }
+  state.error = "";
+  state.lib = buildLibrary(bl, family());
   state.sel = 0;
   render();
 }
@@ -144,7 +163,21 @@ function previewTable(): string {
     <div class="bz-tablewrap"><table class="bz-table">
       <thead><tr><th>Role</th><th>Spindle</th><th>Feed</th><th>Feed/tooth</th><th>Stepdown</th><th>Stepover</th></tr></thead>
       <tbody>${presets}</tbody>
-    </table></div>`;
+    </table></div>
+    ${verifyPanel()}`;
+}
+
+function verifyPanel(): string {
+  if (!state.lib) return "";
+  const r = verifyReport(state.lib);
+  const flags = r.flags.map((f) => `<li><span class="bz-flagn">${f.count}</span> ${f.label}</li>`).join("");
+  const spot = r.spotCheck.map((s) => `${(s.description.split(" - ")[0]).replace(/"/g, "&quot;")} <b>L/D ${s.ld}</b>`).join(" &nbsp;·&nbsp; ");
+  return `<div class="bz-verify">
+    <h3 class="bz-h3">Verify before you cut</h3>
+    <div class="bz-note">Feeds &amp; speeds are Helical S&amp;F mid-range fits; the items below lean on model / engineering defaults — bench-check a representative few.</div>
+    <ul class="bz-flags">${flags || "<li>No flagged defaults.</li>"}</ul>
+    <div class="bz-note">Spot-check across the stiffness range: ${spot}</div>
+  </div>`;
 }
 
 function render() {
@@ -176,7 +209,8 @@ function render() {
           </div>
           <input type="file" id="fileInput" accept=".tools,.json,.csv" hidden />
           <button class="btn" id="sampleBtn">Load sample (H45AL-3)</button>
-          ${state.blanks.length ? `<div class="bz-parsed">Parsed <b>${state.blanks.length}</b> tools<div class="bz-sub">${state.source}</div><div class="bz-holders">${holderSummary(state.blanks)}</div></div>` : ""}
+          ${state.error ? `<div class="bz-error">${state.error}</div>` : ""}
+          ${state.blanks.length ? `<div class="bz-parsed">Parsed <b>${state.blanks.length}</b> tools<div class="bz-sub">${state.source}</div><div class="bz-holders">${holderSummary(state.blanks)}</div>${availableCoatings().length > 1 ? `<div class="bz-rolelabel">Coatings</div><div class="seg bz-coats" id="coatFilter"><button data-coat="all" class="${state.coatingFilter === "all" ? "on" : ""}">All</button>${availableCoatings().map((c) => `<button data-coat="${c}" class="${state.coatingFilter === c ? "on" : ""}">${c}</button>`).join("")}</div>` : ""}</div>` : ""}
         </section>
         <section>
           <h2>3 · Material & cutting roles</h2>
@@ -219,6 +253,8 @@ app.addEventListener("change", (e) => {
 
 app.addEventListener("click", (e) => {
   const el = e.target as HTMLElement;
+  const coat = el.closest("[data-coat]") as HTMLElement | null;
+  if (coat) { state.coatingFilter = coat.dataset.coat!; state.lib = null; render(); return; }
   if (el.closest("#drop")) (document.getElementById("fileInput") as HTMLInputElement).click();
   else if (el.id === "sampleBtn") loadBlanks(parseToolsJson(JSON.parse(sampleRaw)), "sample · Helical_H45AL-3.tools");
   else if (el.id === "genBtn") generate();

@@ -132,6 +132,13 @@ input.ovr.on { background: var(--ovr-bg); border-color: var(--ovr); color: #ffd2
 .bz-trow:hover td { background: rgba(78,161,255,.06); }
 .bz-trow.on td { background: rgba(78,161,255,.14); }
 .bz-h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 6px 0 8px; }
+.bz-error { margin-top: 10px; font-size: 12px; color: #ff9b86; background: var(--warn-bg); border: 1px solid var(--warn); border-radius: 6px; padding: 8px 10px; line-height: 1.5; }
+.bz-coats { margin-top: 6px; }
+.bz-coats button { font-size: 11px; }
+.bz-verify { margin-top: 22px; border-top: 1px solid var(--line); padding-top: 14px; }
+.bz-flags { list-style: none; padding: 0; margin: 8px 0; display: flex; flex-direction: column; gap: 6px; }
+.bz-flags li { font-size: 13px; color: var(--text); line-height: 1.45; }
+.bz-flagn { display: inline-block; min-width: 22px; text-align: center; font-size: 11px; font-weight: 600; color: var(--ovr); background: var(--ovr-bg); border: 1px solid var(--ovr); border-radius: 4px; padding: 0 5px; margin-right: 6px; }
 
 /* ---- Deflection explainer page ---- */
 .def-page { max-width: 760px; margin: 0 auto; padding: 22px 18px 40px; }
