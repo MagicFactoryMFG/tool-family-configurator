@@ -77,6 +77,11 @@ export function appliesTo(key: string, geo: GeoKey): boolean {
 export function defaultRoleKeys(geometry: string): string[] {
   return DEFAULTS[geoKey(geometry)];
 }
+/** Every role that has factors for this geometry (i.e. isn't n/a) — for "select all". */
+export function applicableRoleKeys(geometry: string): string[] {
+  const g = geoKey(geometry);
+  return ROLE_CATALOG.filter((r) => r.geo[g]).map((r) => r.key);
+}
 export function roleSpec(key: string, geo: GeoKey): RoleSpec | null {
   const f = byKey.get(key)?.geo[geo];
   return f ? { key, ...f } : null;

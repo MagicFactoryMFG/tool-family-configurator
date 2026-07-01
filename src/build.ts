@@ -9,7 +9,7 @@ import {
 import { pickEr } from "./generate/holders";
 import { verifyReport } from "./generate/verify";
 import { MATERIALS, materialByKey } from "./generate/materials";
-import { GROUPS, ROLE_CATALOG, appliesTo, roleSpec, defaultRoleKeys, geoKey, type RoleSpec } from "./generate/roles";
+import { GROUPS, ROLE_CATALOG, appliesTo, roleSpec, applicableRoleKeys, geoKey, type RoleSpec } from "./generate/roles";
 import { download } from "./exporters";
 
 // Recursively sort object keys (Fusion serializes keys alphabetically; match it on export).
@@ -27,9 +27,10 @@ const state = {
   familyKey: "square" as FamKey,
   materialKey: "alu",
   maxRpm: 15000,
-  roles: new Set(defaultRoleKeys("square")),
+  roles: new Set(applicableRoleKeys("square")),
   blanks: [] as ToolBlank[],
   source: "",
+  libName: "",
   coatingFilter: "all",
   error: "",
   lib: null as null | { version: number; data: any[] },
@@ -47,6 +48,7 @@ function family(): FamilyDef {
   return { ...base, prefix: mat.prefix, sfm: mat.sfm, material: mat.label, calibrated: mat.calibrated, maxRpm: state.maxRpm, roles };
 }
 
+const sanitizeName = (s: string) => s.trim().replace(/[^\w.\-]+/g, "_").replace(/^_+|_+$/g, "");
 const inch = (v: number, d = 4) => (typeof v === "number" ? `${+v.toFixed(d)}"` : "—");
 const rpm = (v: number) => `${Math.round(v)}`;
 const ipm = (v: number) => `${+v.toFixed(1)}`;
@@ -81,6 +83,7 @@ async function loadFile(file: File) {
     let skipped = 0;
     try { skipped = nonMillableCount(JSON.parse(text)); } catch { /* CSV — no skip count */ }
     const tag = `${file.name} (${(file.size / 1024).toFixed(0)} KB)` + (skipped ? ` · skipped ${skipped} non-millable (probes/taps/…)` : "");
+    state.libName = sanitizeName(file.name.replace(/\.[^.]+$/, "")) || "ToolLibrary";
     loadBlanks(blanks, tag);
   } catch (e) {
     state.blanks = []; state.lib = null;
@@ -103,7 +106,8 @@ const app = document.getElementById("app")!;
 
 function rolesPanel(): string {
   const g = geoKey(baseFamily(state.familyKey).geometry);
-  return GROUPS.map((grp) => {
+  const head = `<div class="bz-rolebtns"><button class="bz-mini" id="rolesAll" type="button">Select all</button><button class="bz-mini" id="rolesNone" type="button">Clear</button></div>`;
+  return head + GROUPS.map((grp) => {
     const rows = ROLE_CATALOG.filter((r) => r.group === grp)
       .map((r) => {
         const ok = appliesTo(r.key, g);
@@ -153,8 +157,11 @@ function previewTable(): string {
     : "";
 
   return `
-    <div class="bz-stats">✓ Generated <b>${data.length}</b> tools · <b>${data.reduce((a, t) => a + t["start-values"].presets.length, 0)}</b> presets · holders embedded
-      <button class="btn primary" id="dlBtn">Download .json</button></div>
+    <div class="bz-stats">✓ Generated <b>${data.length}</b> tools · <b>${data.reduce((a, t) => a + t["start-values"].presets.length, 0)}</b> presets
+      <span style="flex:1"></span>
+      <input id="libName" class="bz-name" value="${sanitizeName(state.libName)}" placeholder="library name" spellcheck="false" />
+      <span class="bz-sub">.json</span>
+      <button class="btn primary" id="dlBtn">Download</button></div>
     <div class="bz-tablewrap"><table class="bz-table">
       <thead><tr><th>#</th><th>Description</th><th>Ø</th><th>Coating</th><th>Holder</th><th>Flute</th><th>OAL</th><th>Presets</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -234,9 +241,11 @@ app.addEventListener("change", (e) => {
   const el = e.target as HTMLInputElement;
   if (el.id === "famSel") {
     state.familyKey = el.value as FamKey;
-    state.roles = new Set(defaultRoleKeys(baseFamily(state.familyKey).geometry));
+    state.roles = new Set(applicableRoleKeys(baseFamily(state.familyKey).geometry));
     state.lib = null;
     render();
+  } else if (el.id === "libName") {
+    state.libName = el.value;
   } else if (el.id === "matSel") {
     state.materialKey = el.value;
     state.lib = null;
@@ -255,11 +264,14 @@ app.addEventListener("click", (e) => {
   const el = e.target as HTMLElement;
   const coat = el.closest("[data-coat]") as HTMLElement | null;
   if (coat) { state.coatingFilter = coat.dataset.coat!; state.lib = null; render(); return; }
+  if (el.id === "rolesAll") { state.roles = new Set(applicableRoleKeys(baseFamily(state.familyKey).geometry)); state.lib = null; render(); return; }
+  if (el.id === "rolesNone") { state.roles = new Set(); state.lib = null; render(); return; }
   if (el.closest("#drop")) (document.getElementById("fileInput") as HTMLInputElement).click();
-  else if (el.id === "sampleBtn") loadBlanks(parseToolsJson(JSON.parse(sampleRaw)), "sample · Helical_H45AL-3.tools");
+  else if (el.id === "sampleBtn") { state.libName = "Helical_H45AL-3"; loadBlanks(parseToolsJson(JSON.parse(sampleRaw)), "sample · Helical_H45AL-3.tools"); }
   else if (el.id === "genBtn") generate();
   else if (el.id === "dlBtn" && state.lib) {
-    const fn = state.familyKey === "square" ? "Helical_H45AL-3.json" : "Helical_H35AL-3.json";
+    const inp = document.getElementById("libName") as HTMLInputElement | null;
+    const fn = `${sanitizeName(inp?.value ?? state.libName) || "ToolLibrary"}.json`;
     download(fn, JSON.stringify(sortDeep(state.lib), null, 1), "application/json");
   } else {
     const row = el.closest(".bz-trow") as HTMLElement | null;
