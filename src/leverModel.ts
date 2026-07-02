@@ -213,7 +213,9 @@ export function derate3(a: Derate3Anchor, k: Derate3Bounds, m: number, r0: numbe
   let axialFrac = 1;
   const floorProduct = k.radialFloorPct * k.chipLoadFloorPct;
   if (P < floorProduct) axialFrac = Math.max(k.axialFloorFrac, P / floorProduct);
-  const stage: DerateStage = axialFrac < 1 - 1e-9 ? "axial" : fz <= k.chipLoadFloorPct + 1e-9 ? "chip" : "radial";
+  // Label by which axis is currently giving: radial slides first; once it floors, chip slides;
+  // once both floor, axial gives.
+  const stage: DerateStage = axialFrac < 1 - 1e-9 ? "axial" : ae <= k.radialFloorPct + 1e-9 ? "chip" : "radial";
   return { ae, fz, axialFrac, stage };
 }
 
