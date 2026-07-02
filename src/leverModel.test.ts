@@ -4,8 +4,11 @@ import {
   type ToolFamily,
   type Calibration,
   type ModelKnobs,
+  type Derate3Anchor,
+  type Derate3Bounds,
   referenceLD,
   allocate,
+  derate3,
   computeRow,
   computeFamily,
 } from "./leverModel";
@@ -146,6 +149,68 @@ describe("property tests (spec §9)", () => {
     for (let i = 0; i < rowsA.length; i++) {
       expect(rowsA[i].radialPct).toBeCloseTo(rowsB[i].radialPct, 12);
       expect(rowsA[i].chipLoadPct).toBeCloseTo(rowsB[i].chipLoadPct, 12);
+    }
+  });
+});
+
+// --- three-stage cascade (Tim, 2026-07-01) ---
+describe("derate3 — three-stage cascade on stickout L/D", () => {
+  const A: Derate3Anchor = { radialPct: 0.3, chipLoadPct: 0.012 };
+  const K: Derate3Bounds = {
+    radialCapPct: 0.45,
+    radialFloorPct: 0.1,
+    chipLoadCapPct: 0.016,
+    chipLoadFloorPct: 0.004,
+    axialFloorFrac: 0.25,
+  };
+  const r0 = 2.5;
+
+  it("passes through the anchor exactly at r0", () => {
+    const d = derate3(A, K, 4, r0, r0);
+    expect(d.stage).toBe("anchor");
+    expect(d.ae).toBeCloseTo(0.3, 12);
+    expect(d.fz).toBeCloseTo(0.012, 12);
+    expect(d.axialFrac).toBe(1);
+  });
+
+  it("below r0 the tool is rigid: values ramp up toward caps, axial stays full", () => {
+    const d = derate3(A, K, 4, r0, 1.5);
+    expect(d.stage).toBe("rigid");
+    expect(d.ae).toBeGreaterThanOrEqual(0.3);
+    expect(d.fz).toBeGreaterThanOrEqual(0.012);
+    expect(d.ae).toBeLessThanOrEqual(K.radialCapPct + 1e-12);
+    expect(d.fz).toBeLessThanOrEqual(K.chipLoadCapPct + 1e-12);
+    expect(d.axialFrac).toBe(1);
+  });
+
+  it("cascades radial → chip → axial in order as the tool gets longer", () => {
+    const stages = [3, 4, 6, 9, 14].map((r) => derate3(A, K, 4, r0, r).stage);
+    // monotonic progression through the cascade (no going backwards)
+    const rank = { anchor: 0, rigid: 0, radial: 1, chip: 2, axial: 3 } as const;
+    for (let i = 1; i < stages.length; i++) {
+      expect(rank[stages[i]]).toBeGreaterThanOrEqual(rank[stages[i - 1]]);
+    }
+    expect(stages[0]).toBe("radial");
+    expect(stages.at(-1)).toBe("axial");
+  });
+
+  it("never breaches any floor", () => {
+    for (let r = r0; r <= 20; r += 0.1) {
+      const d = derate3(A, K, 4, r0, r);
+      expect(d.ae).toBeGreaterThanOrEqual(K.radialFloorPct - 1e-12);
+      expect(d.fz).toBeGreaterThanOrEqual(K.chipLoadFloorPct - 1e-12);
+      expect(d.axialFrac).toBeGreaterThanOrEqual(K.axialFloorFrac - 1e-12);
+      expect(d.axialFrac).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("axial only gives after radial AND chip are both floored", () => {
+    for (let r = r0; r <= 20; r += 0.1) {
+      const d = derate3(A, K, 4, r0, r);
+      if (d.axialFrac < 1 - 1e-9) {
+        expect(d.ae).toBeCloseTo(K.radialFloorPct, 9);
+        expect(d.fz).toBeCloseTo(K.chipLoadFloorPct, 9);
+      }
     }
   });
 });

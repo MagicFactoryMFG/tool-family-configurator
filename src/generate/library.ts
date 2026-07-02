@@ -3,8 +3,9 @@
 // presets, lever-derated Adaptive_Rough, ER holders by Ø, both coatings as separate tools.
 // Cutting parameters are model/calibration-driven — no vendor Speeds & Feeds file needed.
 import type { Calibration, GeometryType, ModelKnobs } from "../leverModel";
-import { allocate, classify } from "../leverModel";
+import { allocate, derate3 } from "../leverModel";
 import { STANDARD_HEM_ANCHOR, STANDARD_HEM_KNOBS } from "../standardCalibration";
+import { ALU_ANCHOR_BY_KEY, defaultBounds, ANCHOR_R0 } from "./anchors";
 import { type RoleSpec, type Base, rolesFor } from "./roles";
 import { type HolderThresholds, DEFAULT_THRESHOLDS, pickHolder } from "./holders";
 
@@ -82,45 +83,69 @@ function baseExpr(spec: [Base, number], dia: number, loc: number) {
   return { expr: `${varName} * ${spec[1]}`, val: r4(ref * spec[1]) };
 }
 
-export function presetFor(role: RoleSpec, blank: ToolBlank, fam: FamilyDef) {
+export function presetFor(role: RoleSpec, blank: ToolBlank, fam: FamilyDef, reach: number) {
   const dia = blank.diameter;
   const loc = blank.fluteLength;
-  let spec: RoleSpec = role;
-  let fpt = role.fpt;
+  const anchor = ALU_ANCHOR_BY_KEY.get(role.key);
   const notes: string[] = [];
 
-  if (role.key === "Adaptive_Rough") {
-    const r = loc / dia;
-    const { ae, fz } = allocate(fam.adaptiveAnchor, fam.adaptiveKnobs, r);
-    fpt = r5(fz);
-    spec = { ...role, so: ["dia", r4(ae)] };
-    const st = classify(fam.adaptiveAnchor, fam.adaptiveKnobs, r, { ae, fz });
-    notes.push(
-      `HEM, lever-derated @ L/D ${r.toFixed(2)} ('${st}'): radial ${(ae * 100).toFixed(1)}%D, ` +
-        `chip ${(fz * 100).toFixed(2)}%D. Anchor r0=${(fam.adaptiveAnchor.anchorLength / fam.adaptiveAnchor.anchorDiameter).toFixed(1)}` +
-        `/ae0=${(fam.adaptiveAnchor.radialPct * 100).toFixed(0)}%/fz0=${(fam.adaptiveAnchor.chipLoadPct * 100).toFixed(1)}% is a tunable starting point`,
+  let fpt: number;                          // chip load as %D for the tool_diameter*fpt expression
+  let sdExpr: string, sdVal: number;        // stepdown (axial)
+  let soExpr: string | null = null, soVal: number | null = null; // stepover (radial)
+
+  if (anchor) {
+    // Anchor-driven: three-stage lever cascade on this tool's stickout L/D (reach/D).
+    const r = reach / dia;
+    const k = defaultBounds(anchor);
+    const d = derate3(
+      { radialPct: anchor.radialPct, chipLoadPct: anchor.chipLoadPct },
+      k, anchor.exponent, ANCHOR_R0, r,
     );
-  } else if (role.hem) {
-    notes.push("HEM/adaptive depths are a non-vendor default - verify in Machining Advisor Pro");
+    // Chip: Face_Rough holds an ABSOLUTE 0.004"/tooth (per-tool %D so the number lands on it);
+    // every other role uses the lever-derated %D.
+    fpt = anchor.chipFixedIn ? r5(anchor.chipFixedIn / dia) : r5(d.fz);
+    // Radial → stepover.
+    soVal = r4(d.ae * dia);
+    soExpr = `tool_diameter * ${r4(d.ae)}`;
+    // Axial → (flute or dia) × factor × axialFrac (third-stage derate), capped at flute below.
+    const axVar = anchor.axial.base === "flute" ? "tool_fluteLength" : "tool_diameter";
+    const axRef = anchor.axial.base === "flute" ? loc : dia;
+    sdVal = r4(axRef * anchor.axial.factor * d.axialFrac);
+    sdExpr = `${axVar} * ${r4(anchor.axial.factor * d.axialFrac)}`;
+    const chipStr = anchor.chipFixedIn ? `${anchor.chipFixedIn}" fixed` : `${(d.fz * 100).toFixed(2)}%D`;
+    notes.push(
+      `lever @ stickout L/D ${r.toFixed(2)} ('${d.stage}'): radial ${(d.ae * 100).toFixed(1)}%D, ` +
+        `chip ${chipStr}, axial ×${d.axialFrac.toFixed(2)}`,
+    );
+  } else {
+    // Fallback (geometries without an anchor, e.g. ball Surface): static RoleSpec factors,
+    // with the legacy adaptive lever on flute/D.
+    let spec: RoleSpec = role;
+    fpt = role.fpt;
+    if (role.key === "Adaptive_Rough") {
+      const { ae, fz } = allocate(fam.adaptiveAnchor, fam.adaptiveKnobs, loc / dia);
+      fpt = r5(fz);
+      spec = { ...role, so: ["dia", r4(ae)] };
+    }
+    const sd = baseExpr(spec.sd, dia, loc);
+    sdExpr = sd.expr; sdVal = sd.val;
+    if (spec.so != null) { const so = baseExpr(spec.so, dia, loc); soExpr = so.expr; soVal = so.val; }
   }
+
+  // Fusion requires stepdown (ADOC) ≤ flute length. Cap at the flute, FLOOR-rounded so
+  // rounding never pushes the cached value a hair over LCF (e.g. round(0.21875,4)=0.2188 > flute).
+  if (sdVal > loc) { sdExpr = "tool_fluteLength * 1"; sdVal = Math.floor(loc * 1e4) / 1e4; }
   if (!fam.calibrated) notes.push(`Starting-point parameters for ${fam.material} - calibrate before use`);
 
+  const useSo = soExpr != null;
   const f_z = r5(fpt * dia);
   const sp = speedFor(fam.sfm, dia, fam.maxRpm);
   const v_f = r4(sp.n * f_z * blank.flutes);
   const v_f_ramp = r4(v_f * 0.75);
-  let sd = baseExpr(spec.sd, dia, loc);
-  // Fusion requires stepdown (ADOC) ≤ flute length. Cap at the flute, FLOOR-rounded so
-  // rounding never pushes the cached value a hair over LCF (e.g. round(0.21875,4)=0.2188 > flute).
-  if (sd.val > loc) sd = { expr: "tool_fluteLength * 1", val: Math.floor(loc * 1e4) / 1e4 };
-  const useSo = spec.so != null;
-  const so = useSo ? baseExpr(spec.so!, dia, loc) : null;
-  if (role.floor) notes.push("Floor-finish stepover is an engineering default - vendor 'Fin' RDOC (4-6%D) is for walls");
 
   // Expression block in the EXACT format of the working Super Duper Configurator exports
   // (HomeVF2SS_configured / MATSUURA_configured): parametric FORMULAS, with the numeric
-  // fields as their calculated results. Only these keys are valid — tool_coolant, use_tool_*,
-  // tool_feedPlunge ("100 inpm"), tool_surfaceSpeed flag the preset. Note "5 deg".
+  // fields as their calculated results. Only these keys are valid. Note "5 deg".
   const expressions: Record<string, string> = {
     tool_feedEntry: "tool_feedCutting",
     tool_feedExit: "tool_feedCutting",
@@ -129,9 +154,9 @@ export function presetFor(role: RoleSpec, blank: ToolBlank, fam: FamilyDef) {
     tool_feedTransition: "tool_feedCutting",
     tool_rampAngle: `${fam.rampDeg} deg`,
     tool_rampSpindleSpeed: "tool_spindleSpeed",
-    tool_stepdown: sd.expr,
+    tool_stepdown: sdExpr,
   };
-  if (useSo) expressions.tool_stepover = so!.expr;
+  if (useSo) expressions.tool_stepover = soExpr!;
 
   const p: Record<string, unknown> = {
     guid: newGuid(),
@@ -152,11 +177,11 @@ export function presetFor(role: RoleSpec, blank: ToolBlank, fam: FamilyDef) {
     v_f_plunge: 100.0,
     "use-stepdown": true,
     "use-stepover": useSo,
-    stepdown: sd.val,
+    stepdown: sdVal,
     expressions,
     material: { category: "all", query: "", "use-hardness": false },
   };
-  if (useSo) p.stepover = so!.val;
+  if (useSo) p.stepover = soVal;
   return p;
 }
 
@@ -223,7 +248,7 @@ export function buildTool(blank: ToolBlank, fam: FamilyDef, idx: number) {
       "break-control": false, comment: "", "manual-tool-change": false },
     geometry,
     holder,
-    "start-values": { presets: fam.roles.map((role) => presetFor(role, blank, fam)) },
+    "start-values": { presets: fam.roles.map((role) => presetFor(role, blank, fam, lb)) },
   };
 }
 

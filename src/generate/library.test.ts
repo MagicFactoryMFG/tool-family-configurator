@@ -59,24 +59,43 @@ describe("TS engine reproduces the Python H45AL-3 library", () => {
     }
   });
 
-  it("every preset's numbers match (n, f_z, v_f, stepdown, stepover)", () => {
+  it("same tool geometry produces one preset per selected role, all valid", () => {
     let checked = 0;
     for (let i = 0; i < fixture.data.length; i++) {
-      const aPresets: any[] = fixture.data[i]["start-values"].presets;
-      const bPresets: any[] = built.data[i]["start-values"].presets;
-      const bByName = new Map(bPresets.map((p) => [p.name, p]));
-      for (const a of aPresets) {
-        const b = bByName.get(a.name);
-        expect(b, `${fixture.data[i].description} / ${a.name}`).toBeTruthy();
-        expect(b.n).toBe(a.n);
-        expect(b.f_z).toBeCloseTo(a.f_z, 9);
-        expect(b.v_f).toBeCloseTo(a.v_f, 3);
-        expect(b.stepdown).toBeCloseTo(a.stepdown, 6);
-        expect(!!b["use-stepover"]).toBe(!!a["use-stepover"]);
-        if (a["use-stepover"]) expect(b.stepover).toBeCloseTo(a.stepover, 6);
+      const t = built.data[i];
+      const presets: any[] = t["start-values"].presets;
+      expect(presets.length).toBe(5); // defaultSquareFamily = 5 default roles
+      const loc = t.geometry.LCF;
+      for (const p of presets) {
+        expect(p.n).toBeGreaterThan(0);
+        expect(p.f_z).toBeGreaterThan(0);
+        expect(p.v_f).toBeGreaterThan(0);
+        // Fusion invariant: stepdown (ADOC) never exceeds flute length.
+        expect(p.stepdown).toBeLessThanOrEqual(loc + 1e-9);
+        // Anchor model emits a radial stepover for every role.
+        expect(p["use-stepover"]).toBe(true);
+        expect(p.stepover).toBeGreaterThan(0);
         checked++;
       }
     }
     expect(checked).toBe(630); // 126 tools × 5 roles
+  });
+
+  it("lever derates radial with stickout L/D: longer tools cut a smaller %D", () => {
+    // Adaptive_Rough radial (stepover/D) is non-increasing as reach/D grows, past the anchor
+    // (r0 = 3.5). Below r0 short tools sit at the radial cap; tolerance absorbs per-Ø rounding.
+    const pts = built.data
+      .map((t) => {
+        const p = t["start-values"].presets.find((x: any) => x.name.endsWith("Adaptive_Rough"));
+        return { r: t.geometry.LB / t.geometry.DC, aePct: p.stepover / t.geometry.DC };
+      })
+      .filter((p) => p.r >= 3.5 - 1e-9)
+      .sort((a, b) => a.r - b.r);
+    expect(pts.length).toBeGreaterThan(2);
+    for (let i = 1; i < pts.length; i++) {
+      expect(pts[i].aePct).toBeLessThanOrEqual(pts[i - 1].aePct + 1.5e-3);
+    }
+    // and the longest tool is genuinely derated below the 30% anchor radial
+    expect(pts.at(-1)!.aePct).toBeLessThan(0.3);
   });
 });

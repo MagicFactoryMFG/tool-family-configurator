@@ -166,6 +166,57 @@ export function computeRow(fam: ToolFamily, r: number): ComputedRow {
   };
 }
 
+// --- Three-stage derating (Tim, 2026-07-01) -------------------------------------------
+// Generalises the two-axis `allocate` to a THREE-stage cascade, applied per-role and keyed
+// on STICKOUT L/D (reach/D), not flute/D. As a tool gets longer the force budget falls and
+// is shed in order: (1) radial + chip together (as `allocate`), then (2) once BOTH hit their
+// floors, (3) axial gives — the stepdown drops below its nominal value. Axial has its own
+// floor so a very long tool still takes a real depth.
+
+export interface Derate3Anchor {
+  radialPct: number;   // ae0 at r0 (fraction)
+  chipLoadPct: number; // fz0 at r0 (fraction)
+}
+export interface Derate3Bounds {
+  radialCapPct: number;
+  radialFloorPct: number;
+  chipLoadCapPct: number;
+  chipLoadFloorPct: number;
+  axialFloorFrac: number; // lowest fraction of nominal axial the third stage may reach
+}
+export type DerateStage = "anchor" | "rigid" | "radial" | "chip" | "axial";
+export interface Derate3 {
+  ae: number;        // radial %D (fraction)
+  fz: number;        // chip load %D (fraction)
+  axialFrac: number; // multiplier on the role's nominal axial (1 = full)
+  stage: DerateStage;
+}
+
+/**
+ * Three-stage force-budget derating at stickout ratio r (= reach/D), anchored at r0.
+ * P(r) = ae0·fz0·(r0/r)^m. Below r0 the tool is rigid (chip up, then radial up, to caps);
+ * above r0 radial slides to its floor, then chip to its floor, then the remaining deficit
+ * spills into axial (down to axialFloorFrac).
+ */
+export function derate3(a: Derate3Anchor, k: Derate3Bounds, m: number, r0: number, r: number): Derate3 {
+  const P = a.radialPct * a.chipLoadPct * Math.pow(r0 / r, m);
+  if (Math.abs(r - r0) < 1e-6) {
+    return { ae: a.radialPct, fz: a.chipLoadPct, axialFrac: 1, stage: "anchor" };
+  }
+  if (r < r0) {
+    const fz = Math.min(k.chipLoadCapPct, P / a.radialPct);
+    const ae = Math.min(k.radialCapPct, P / fz);
+    return { ae, fz, axialFrac: 1, stage: "rigid" };
+  }
+  const ae = Math.max(k.radialFloorPct, P / a.chipLoadPct);
+  const fz = Math.max(k.chipLoadFloorPct, P / ae);
+  let axialFrac = 1;
+  const floorProduct = k.radialFloorPct * k.chipLoadFloorPct;
+  if (P < floorProduct) axialFrac = Math.max(k.axialFloorFrac, P / floorProduct);
+  const stage: DerateStage = axialFrac < 1 - 1e-9 ? "axial" : fz <= k.chipLoadFloorPct + 1e-9 ? "chip" : "radial";
+  return { ae, fz, axialFrac, stage };
+}
+
 /** Compute the whole family across its L/D grid (spec §3.2). */
 export function computeFamily(fam: ToolFamily): ComputedRow[] {
   const { min, max, step } = fam.ldGrid;
