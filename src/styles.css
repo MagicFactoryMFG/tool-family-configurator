@@ -166,3 +166,24 @@ input.ovr.on { background: var(--ovr-bg); border-color: var(--ovr); color: #ffd2
 .def-mult { font-size: 38px; font-weight: 600; line-height: 1; }
 .def-cap { font-size: 14px; color: var(--text); line-height: 1.6; border-left: 3px solid var(--line); padding-left: 10px; }
 .def-law { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+/* Anchor-tuning panel (Build page, Phase 3) */
+.bz-anchor { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; }
+.bz-anchor-h { display: flex; align-items: baseline; gap: 12px; }
+.bz-anchor-h .bz-h3 { margin: 0; flex: 1; }
+.bz-anchor-h .bz-sub { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--muted); font-size: 11px; margin-left: 8px; }
+.bz-atable { width: auto; }
+.bz-atable th, .bz-atable td { text-align: center; white-space: nowrap; }
+.bz-atable td.bz-arole { text-align: left; color: var(--text); }
+.bz-anum { width: 58px; background: var(--panel2); border: 1px solid var(--line); color: var(--text); border-radius: 4px; padding: 3px 5px; text-align: right; font: inherit; font-variant-numeric: tabular-nums; }
+.bz-anum:focus { border-color: var(--accent); outline: none; }
+.bz-anum-m { width: 44px; }
+.bz-axbase { color: var(--muted); font-size: 10px; margin-left: 4px; }
+.bz-fixed { color: var(--accent); font-variant-numeric: tabular-nums; }
+
+/* Spot-check chips */
+.bz-spots { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0 4px; }
+.bz-spot { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; background: var(--panel2); border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 7px 11px; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600; }
+.bz-spot:hover { border-color: var(--accent); }
+.bz-spot.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel2)); }
+.bz-spot-d { font-weight: 400; color: var(--muted); font-size: 11px; }

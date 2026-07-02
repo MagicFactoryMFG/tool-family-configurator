@@ -5,7 +5,7 @@
 import type { Calibration, GeometryType, ModelKnobs } from "../leverModel";
 import { allocate, derate3 } from "../leverModel";
 import { STANDARD_HEM_ANCHOR, STANDARD_HEM_KNOBS } from "../standardCalibration";
-import { ALU_ANCHOR_BY_KEY, defaultBounds, ANCHOR_R0 } from "./anchors";
+import { ALU_ANCHOR_BY_KEY, defaultBounds, ANCHOR_R0, type RoleAnchor } from "./anchors";
 import { type RoleSpec, type Base, rolesFor } from "./roles";
 import { type HolderThresholds, DEFAULT_THRESHOLDS, pickHolder } from "./holders";
 
@@ -40,6 +40,9 @@ export interface FamilyDef {
   adaptiveAnchor: Calibration;
   adaptiveKnobs: ModelKnobs;
   holderThresholds: HolderThresholds;
+  // Optional per-role anchor overrides (the anchor-tuning UI supplies these); defaults to
+  // the standard aluminum datasheet (ALU_ANCHOR_BY_KEY) when absent.
+  anchorByKey?: Map<string, RoleAnchor>;
 }
 
 // Match Python's round(): banker's rounding (half-to-even) on the number's TRUE decimal
@@ -86,7 +89,7 @@ function baseExpr(spec: [Base, number], dia: number, loc: number) {
 export function presetFor(role: RoleSpec, blank: ToolBlank, fam: FamilyDef, reach: number) {
   const dia = blank.diameter;
   const loc = blank.fluteLength;
-  const anchor = ALU_ANCHOR_BY_KEY.get(role.key);
+  const anchor = (fam.anchorByKey ?? ALU_ANCHOR_BY_KEY).get(role.key);
   const notes: string[] = [];
 
   let fpt: number;                          // chip load as %D for the tool_diameter*fpt expression

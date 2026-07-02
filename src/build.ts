@@ -7,6 +7,7 @@ import {
   type FamilyDef, type ToolBlank,
 } from "./generate/library";
 import { pickEr } from "./generate/holders";
+import { ALU_ANCHORS, ANCHOR_R0, type RoleAnchor } from "./generate/anchors";
 import { verifyReport } from "./generate/verify";
 import { MATERIALS, materialByKey } from "./generate/materials";
 import { GROUPS, ROLE_CATALOG, appliesTo, roleSpec, applicableRoleKeys, geoKey, type RoleSpec } from "./generate/roles";
@@ -23,11 +24,17 @@ import sampleRaw from "./generate/__fixtures__/Helical_H45AL-3.tools?raw";
 type FamKey = "square" | "ball";
 const baseFamily = (k: FamKey): FamilyDef => (k === "square" ? defaultSquareFamily() : defaultBallFamily());
 
+// Editable working copy of the standard anchors (Tim's sheet). The anchor-tuning panel
+// mutates these; generation reads them via family().anchorByKey.
+const cloneAnchors = (): Record<string, RoleAnchor> =>
+  Object.fromEntries(ALU_ANCHORS.map((a) => [a.key, { ...a, axial: { ...a.axial } }]));
+
 const state = {
   familyKey: "square" as FamKey,
   materialKey: "alu",
   maxRpm: 15000,
   roles: new Set(applicableRoleKeys("square")),
+  anchors: cloneAnchors(),
   blanks: [] as ToolBlank[],
   source: "",
   libName: "",
@@ -45,7 +52,8 @@ function family(): FamilyDef {
   const mat = materialByKey(state.materialKey);
   const g = geoKey(base.geometry);
   const roles = [...state.roles].map((k) => roleSpec(k, g)).filter(Boolean) as RoleSpec[];
-  return { ...base, prefix: mat.prefix, sfm: mat.sfm, material: mat.label, calibrated: mat.calibrated, maxRpm: state.maxRpm, roles };
+  const anchorByKey = new Map(Object.entries(state.anchors));
+  return { ...base, prefix: mat.prefix, sfm: mat.sfm, material: mat.label, calibrated: mat.calibrated, maxRpm: state.maxRpm, roles, anchorByKey };
 }
 
 const sanitizeName = (s: string) => s.trim().replace(/[^\w.\-]+/g, "_").replace(/^_+|_+$/g, "");
@@ -101,6 +109,14 @@ function generate() {
   render();
 }
 
+// Live re-interpolation: if a library is already generated, rebuild it in place so anchor
+// tweaks (and role/RPM changes) flow straight into the preview.
+function regen() {
+  if (!state.lib) return;
+  const bl = selectedBlanks();
+  if (bl.length) state.lib = buildLibrary(bl, family());
+}
+
 // ---- render ----------------------------------------------------------------
 const app = document.getElementById("app")!;
 
@@ -116,6 +132,40 @@ function rolesPanel(): string {
       .join("");
     return `<div class="rolegroup"><div class="rolegroup-h">${grp}</div>${rows}</div>`;
   }).join("");
+}
+
+// Anchor-tuning panel: the sheet values populate here as editable fields for each selected
+// role; edits re-interpolate the whole family live (Tim's Phase-3 workflow, 2026-07-01).
+function anchorPanel(): string {
+  const keys = ROLE_CATALOG.map((r) => r.key).filter((k) => state.roles.has(k) && state.anchors[k]);
+  if (!keys.length) return "";
+  const mat = materialByKey(state.materialKey);
+  const rows = keys
+    .map((k) => {
+      const a = state.anchors[k];
+      const chip = a.chipFixedIn != null
+        ? `<span class="bz-fixed" title="fixed chip load — not %D">${a.chipFixedIn}″</span>`
+        : `<input class="bz-anum" type="number" step="0.05" min="0" data-anchor="${k}" data-field="chip" value="${+(a.chipLoadPct * 100).toFixed(3)}" />`;
+      return `<tr>
+        <td class="bz-arole">${k.replace(/_/g, " ")}</td>
+        <td><input class="bz-anum" type="number" step="1" min="0" max="100" data-anchor="${k}" data-field="radial" value="${+(a.radialPct * 100).toFixed(1)}" /></td>
+        <td>${chip}</td>
+        <td><input class="bz-anum" type="number" step="0.05" min="0" data-anchor="${k}" data-field="axialFactor" value="${a.axial.factor}" /><span class="bz-axbase">×${a.axial.base === "flute" ? "flute" : "Ø"}</span></td>
+        <td><input class="bz-anum bz-anum-m" type="number" step="1" min="2" max="6" data-anchor="${k}" data-field="exponent" value="${a.exponent}" /></td>
+      </tr>`;
+    })
+    .join("");
+  return `<div class="bz-anchor">
+    <div class="bz-anchor-h">
+      <h3 class="bz-h3">Anchor tuning <span class="bz-sub">values at the anchor tool (stickout L/D ${ANCHOR_R0}, ${mat.sfm} SFM) — the family interpolates from here</span></h3>
+      <button class="bz-mini" id="anchorReset" type="button">Reset to sheet</button>
+    </div>
+    <div class="bz-tablewrap"><table class="bz-table bz-atable">
+      <thead><tr><th>Role</th><th>Radial&nbsp;%D</th><th>Chip&nbsp;%D</th><th>Axial</th><th>m</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <div class="bz-note">Edit any value — the preview re-interpolates across every tool. Radial/chip are the anchor engagements; <b>m</b> sets how steeply they derate on longer tools (2 = gentle, 4 = steep / least deflection).</div>
+  </div>`;
 }
 
 function previewTable(): string {
@@ -178,12 +228,15 @@ function verifyPanel(): string {
   if (!state.lib) return "";
   const r = verifyReport(state.lib);
   const flags = r.flags.map((f) => `<li><span class="bz-flagn">${f.count}</span> ${f.label}</li>`).join("");
-  const spot = r.spotCheck.map((s) => `${(s.description.split(" - ")[0]).replace(/"/g, "&quot;")} <b>L/D ${s.ld}</b>`).join(" &nbsp;·&nbsp; ");
+  const label = ["shortest", "mid", "longest"];
+  const spot = r.spotCheck
+    .map((s, i) => `<button class="bz-spot ${s.index === state.sel ? "on" : ""}" data-ti="${s.index}">${label[i] ?? ""} reach · L/D ${s.ld}<span class="bz-spot-d">${(s.description.split(" - ")[0]).replace(/"/g, "&quot;")}</span></button>`)
+    .join("");
   return `<div class="bz-verify">
-    <h3 class="bz-h3">Verify before you cut</h3>
-    <div class="bz-note">Feeds &amp; speeds are Helical S&amp;F mid-range fits; the items below lean on model / engineering defaults — bench-check a representative few.</div>
-    <ul class="bz-flags">${flags || "<li>No flagged defaults.</li>"}</ul>
-    <div class="bz-note">Spot-check across the stiffness range: ${spot}</div>
+    <h3 class="bz-h3">Spot-check before you cut</h3>
+    <div class="bz-note">Click a tool to inspect its presets above. Check the stiffness spread — the lever derates hardest at the longest reach. Feeds &amp; speeds are your tuned anchors interpolated across the family.</div>
+    <div class="bz-spots">${spot}</div>
+    ${flags ? `<div class="bz-note" style="margin-top:12px">Presets leaning on model / engineering defaults:</div><ul class="bz-flags">${flags}</ul>` : ""}
   </div>`;
 }
 
@@ -232,7 +285,7 @@ function render() {
         </section>
         <button class="btn primary bz-gen" id="genBtn" ${state.blanks.length ? "" : "disabled"}>Generate library →</button>
       </aside>
-      <main class="bz-main">${previewTable()}</main>
+      <main class="bz-main">${state.blanks.length ? anchorPanel() : ""}${previewTable()}</main>
     </div>`;
 }
 
@@ -252,6 +305,18 @@ app.addEventListener("change", (e) => {
     render();
   } else if (el.dataset.role) {
     el.checked ? state.roles.add(el.dataset.role) : state.roles.delete(el.dataset.role);
+    regen(); render(); // refresh the anchor panel + preview to match the role selection
+  } else if (el.dataset.anchor) {
+    const a = state.anchors[el.dataset.anchor];
+    const v = parseFloat(el.value);
+    if (a && !isNaN(v)) {
+      const f = el.dataset.field;
+      if (f === "radial") a.radialPct = v / 100;
+      else if (f === "chip") a.chipLoadPct = v / 100;
+      else if (f === "axialFactor") a.axial.factor = v;
+      else if (f === "exponent") a.exponent = v;
+      regen(); render();
+    }
   } else if (el.id === "maxRpm") {
     const v = parseInt(el.value);
     if (!isNaN(v)) state.maxRpm = v;
@@ -264,8 +329,9 @@ app.addEventListener("click", (e) => {
   const el = e.target as HTMLElement;
   const coat = el.closest("[data-coat]") as HTMLElement | null;
   if (coat) { state.coatingFilter = coat.dataset.coat!; state.lib = null; render(); return; }
-  if (el.id === "rolesAll") { state.roles = new Set(applicableRoleKeys(baseFamily(state.familyKey).geometry)); state.lib = null; render(); return; }
-  if (el.id === "rolesNone") { state.roles = new Set(); state.lib = null; render(); return; }
+  if (el.id === "rolesAll") { state.roles = new Set(applicableRoleKeys(baseFamily(state.familyKey).geometry)); regen(); render(); return; }
+  if (el.id === "rolesNone") { state.roles = new Set(); regen(); render(); return; }
+  if (el.id === "anchorReset") { state.anchors = cloneAnchors(); regen(); render(); return; }
   if (el.closest("#drop")) (document.getElementById("fileInput") as HTMLInputElement).click();
   else if (el.id === "sampleBtn") { state.libName = "Helical_H45AL-3"; loadBlanks(parseToolsJson(JSON.parse(sampleRaw)), "sample · Helical_H45AL-3.tools"); }
   else if (el.id === "genBtn") generate();
@@ -274,8 +340,8 @@ app.addEventListener("click", (e) => {
     const fn = `${sanitizeName(inp?.value ?? state.libName) || "ToolLibrary"}.json`;
     download(fn, JSON.stringify(sortDeep(state.lib), null, 1), "application/json");
   } else {
-    const row = el.closest(".bz-trow") as HTMLElement | null;
-    if (row) { state.sel = +row.dataset.ti!; render(); }
+    const pick = el.closest(".bz-trow, .bz-spot") as HTMLElement | null;
+    if (pick?.dataset.ti != null) { state.sel = +pick.dataset.ti; render(); }
   }
 });
 

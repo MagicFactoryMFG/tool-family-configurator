@@ -7,7 +7,7 @@ export interface VerifyReport {
   tools: number;
   presets: number;
   flags: VerifyFlag[];
-  spotCheck: { description: string; ld: number }[];
+  spotCheck: { description: string; ld: number; index: number }[];
 }
 
 // Categorize preset-description flags into a small, stable set (adaptive notes carry per-tool
@@ -35,13 +35,14 @@ export function verifyReport(lib: { data: any[] }): VerifyReport {
   }
   const flags = [...counts].map(([label, count]) => ({ label, count })).sort((a, b) => b.count - a.count);
 
-  // Spot-check: smallest, middle, and largest L/D (flute ÷ Ø) — the stiffness spread.
+  // Spot-check: smallest, middle, and largest STICKOUT L/D (reach ÷ Ø) — the stiffness
+  // spread that drives the lever. `index` is the tool's position in lib.data (for UI select).
   const withLd = tools
-    .filter((t) => t.geometry?.DC > 0)
-    .map((t) => ({ t, ld: t.geometry.LCF / t.geometry.DC }))
+    .map((t, index) => ({ t, index, ld: (t.geometry?.LB ?? t.geometry?.LCF ?? 0) / (t.geometry?.DC || 1) }))
+    .filter((x) => x.t.geometry?.DC > 0)
     .sort((a, b) => a.ld - b.ld);
-  const idxs = withLd.length ? [...new Set([0, Math.floor(withLd.length / 2), withLd.length - 1])] : [];
-  const spotCheck = idxs.map((i) => ({ description: withLd[i].t.description, ld: +withLd[i].ld.toFixed(2) }));
+  const picks = withLd.length ? [...new Set([0, Math.floor(withLd.length / 2), withLd.length - 1])] : [];
+  const spotCheck = picks.map((i) => ({ description: withLd[i].t.description, ld: +withLd[i].ld.toFixed(2), index: withLd[i].index }));
 
   return { tools: tools.length, presets, flags, spotCheck };
 }
