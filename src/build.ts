@@ -9,6 +9,7 @@ import {
 import { pickEr } from "./generate/holders";
 import { ALU_ANCHORS, ANCHOR_R0, type RoleAnchor } from "./generate/anchors";
 import { verifyReport } from "./generate/verify";
+import { buildStore } from "./storage";
 import { MATERIALS, materialByKey } from "./generate/materials";
 import { GROUPS, ROLE_CATALOG, appliesTo, roleSpec, applicableRoleKeys, geoKey, type RoleSpec } from "./generate/roles";
 import { download } from "./exporters";
@@ -115,6 +116,15 @@ function regen() {
   if (!state.lib) return;
   const bl = selectedBlanks();
   if (bl.length) state.lib = buildLibrary(bl, family());
+}
+
+// Persist the working state so it survives navigation to the Lever page and back.
+function persist() {
+  buildStore.save({
+    familyKey: state.familyKey, materialKey: state.materialKey, maxRpm: state.maxRpm,
+    roles: [...state.roles], anchors: state.anchors, blanks: state.blanks,
+    source: state.source, libName: state.libName, coatingFilter: state.coatingFilter, sel: state.sel,
+  });
 }
 
 // ---- render ----------------------------------------------------------------
@@ -287,6 +297,7 @@ function render() {
       </aside>
       <main class="bz-main">${state.blanks.length ? anchorPanel() : ""}${previewTable()}</main>
     </div>`;
+  persist();
 }
 
 // ---- events (delegated, bound once) ----------------------------------------
@@ -360,10 +371,25 @@ app.addEventListener("drop", (e) => {
   if (f) loadFile(f);
 });
 
-// boot — #sample auto-loads + generates the sample for a populated view.
-if (location.hash === "#sample") {
+// boot — restore the shared working state (survives Lever↔Build navigation); else #sample
+// auto-loads a populated demo view; else the empty default.
+const saved = buildStore.load();
+if (saved && location.hash !== "#sample") {
+  state.familyKey = (saved.familyKey as FamKey) ?? state.familyKey;
+  state.materialKey = saved.materialKey ?? state.materialKey;
+  state.maxRpm = saved.maxRpm ?? state.maxRpm;
+  state.roles = new Set(saved.roles?.length ? saved.roles : applicableRoleKeys(baseFamily(state.familyKey).geometry));
+  state.anchors = { ...cloneAnchors(), ...(saved.anchors ?? {}) };
+  state.blanks = saved.blanks ?? [];
+  state.source = saved.source ?? "";
+  state.libName = saved.libName ?? "";
+  state.coatingFilter = saved.coatingFilter ?? "all";
+  state.sel = saved.sel ?? 0;
+  if (state.blanks.length) state.lib = buildLibrary(selectedBlanks(), family());
+} else if (location.hash === "#sample") {
   state.blanks = parseToolsJson(JSON.parse(sampleRaw));
   state.source = "sample · Helical_H45AL-3.tools";
+  state.libName = "Helical_H45AL-3";
   state.lib = buildLibrary(state.blanks, family());
 }
 render();

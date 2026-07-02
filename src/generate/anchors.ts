@@ -21,7 +21,7 @@ export interface RoleAnchor {
 
 // Fractions: sheet "1.2" %D → 0.012, "30" %D → 0.30, etc.
 export const ALU_ANCHORS: RoleAnchor[] = [
-  { key: "Face_Rough",        radialPct: 0.85, chipLoadPct: 0.012, chipFixedIn: 0.004, axial: { base: "flute", factor: 0.4 },  exponent: 3 },
+  { key: "Face_Rough",        radialPct: 0.85, chipLoadPct: 0.006,                     axial: { base: "flute", factor: 0.4 },  exponent: 3 },
   { key: "Adaptive_Rough",    radialPct: 0.30, chipLoadPct: 0.012,                     axial: { base: "flute", factor: 1.0 },  exponent: 4 },
   { key: "Traditional_Rough", radialPct: 0.75, chipLoadPct: 0.006,                     axial: { base: "dia",   factor: 0.5 },  exponent: 4 },
   { key: "Bore_Rough",        radialPct: 1.00, chipLoadPct: 0.006,                     axial: { base: "dia",   factor: 0.5 },  exponent: 2 },
